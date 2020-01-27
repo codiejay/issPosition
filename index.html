@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Current Position of the ISS</title>
+  <!-- Leaflet integration. https://leafletjs.com/examples/quick-start/-->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
+  integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
+  crossorigin=""/>
+
+ <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"
+ integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew=="
+ crossorigin=""></script>
+</head>
+<body>
+  <style>
+   * { 
+     font-family: Georgia, 'Times New Roman', Times, serif;
+   }
+   #mapid { 
+     height: 60vh;
+     width: 90vw;
+   }
+  </style>
+  <h1>Where the ISS(International Space Station) at?</h1>
+  <h3 style='color: purple;'>Longitude: <span style='color: black;' id='longitude'></span></h3>
+  <h3 style='color: purple;'>Latitude: <span style='color: black;' id='latitude'></span></h3>
+  <h3 style='color: purple;'>Visibility: <span style='color: black;' id='visibility'></span></h3>
+  <h3 style='color: purple;'>Velocity: <span style='color: black;' id='velocity'></span></h3>
+  <div id='mapid'></div>
+
+
+<script>
+  const ISSAPIURL = 'https://api.wheretheiss.at/v1/satellites/25544';
+  const tileUrl = 'https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
+  const getISSPosition = async() => { 
+    const response = await fetch(ISSAPIURL);
+    const data = await response.json(); 
+    const { latitude, longitude, visibility, velocity }  = await data;
+    return {latitude, longitude, visibility, velocity}
+  }
+
+  const dataToMap = async() => { 
+    let mymap = L.map('mapid').setView([0, 0], 2);
+    let myIcon = L.icon({
+      iconUrl: 'issImage.png',
+      iconSize: [88, 45],
+    });
+    const marker = L.marker([0, 0], {icon: myIcon}).addTo(mymap);
+    L.tileLayer(tileUrl, {
+      maxZoom: 18,
+      id: 'mapbox/streets-v11'
+    }).addTo(mymap);
+    setInterval(() => {
+      getISSPosition()
+        .then((data) => { 
+          document.getElementById('longitude').textContent = data.longitude;
+          document.getElementById('latitude').textContent = data.latitude;
+          document.getElementById('visibility').textContent = data.visibility;
+          document.getElementById('velocity').textContent = data.velocity;
+          console.log(data)
+          marker.setLatLng([data.latitude,data.longitude])
+          mymap.setView([data.latitude, data.longitude ], 4)
+        })
+    }, 1000);
+  }
+
+dataToMap()
+</script>
+</body>
+</html>
